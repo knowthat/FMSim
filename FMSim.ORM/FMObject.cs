@@ -5,30 +5,59 @@ using System.Text;
 using System.ComponentModel;
 
 namespace FMSim.ORM
-{
-    public enum PersistenceState
-    {
-        New, Modified, Current
-    }
-
+{   
     public class FMObject: INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
-        public Dictionary<string, FMAttribute> attributes;
-        public Dictionary<string, FMAttribute> attributes_DeletedPersisted;
-
-        public PersistenceState persState;
+        public Dictionary<string, FMAbstractAttribute> attributes;
+        public Dictionary<FMAttribute_derived, int> Subscribers;
         public FMObjectSpace objectSpace;
-        private string fMClass;
-        public string FMClass 
+
+        public FMObject(FMObjectSpace aObjectSpace)
         {
-            get { return fMClass; }
-            set { 
-                    fMClass = value;
-                    if (PropertyChanged != null)
-                        PropertyChanged(this, new PropertyChangedEventArgs("FMClass"));
-                }
+            attributes = new Dictionary<string, FMAbstractAttribute>();
+            Subscribers = new Dictionary<FMAttribute_derived, int>();
+            objectSpace = aObjectSpace;
+            aObjectSpace.AllObjects.Add(this);
+        }
+
+
+        private string fMClass;        
+        public string FMClass
+        {
+            get 
+            {
+                if (objectSpace.SubscriptionHandler.IsSubscribing)
+                    Subscribe(objectSpace.SubscriptionHandler.CurrentSubscriber);
+                return fMClass; 
+            }
+            set
+            {
+                fMClass = value;
+                if (PropertyChanged != null)
+                    PropertyChanged(this, new PropertyChangedEventArgs("FMClass"));
+            }
+        }
+
+        public void Subscribe(FMAttribute_derived aSubscriber)
+        {
+            if (!Subscribers.ContainsKey(aSubscriber))
+            {
+                Subscribers.Add(aSubscriber, 0);
+                this.PropertyChanged += aSubscriber.ObservedItemChanged;
+                    aSubscriber.ObjectSubscriptions.Add(this);
+            }
+        }
+
+        public void UnSubscribe(FMAttribute_derived aSubscriber)
+        {
+            if (Subscribers.ContainsKey(aSubscriber))
+            {
+                Subscribers.Remove(aSubscriber);
+                this.PropertyChanged -= aSubscriber.ObservedItemChanged;
+                aSubscriber.ObjectSubscriptions.Remove(this);
+            }
         }
 
         void Changed()
@@ -37,48 +66,89 @@ namespace FMSim.ORM
                 PropertyChanged(this, new PropertyChangedEventArgs("attributes"));
         }
 
-
         public class FMAbstractAttribute : INotifyPropertyChanged
         {
             public event PropertyChangedEventHandler PropertyChanged;
-            public FMAbstractAttribute(FMObject aThisObject, string aName)
+            public Dictionary<FMAttribute_derived, int> Subscribers;
+            public FMAbstractAttribute(FMObject aThisObject, string aType, string aName)
             {
+                Subscribers = new Dictionary<FMAttribute_derived, int>();
                 thisObject = aThisObject;
+                type = aType; 
                 name = aName;
             }
 
-            public void Changed()
+            public void Subscribe(FMAttribute_derived aSubscriber)
             {
-                if (persState != PersistenceState.New) // If it is persisted
-                    persState = PersistenceState.Modified;
-                thisObject.UpdateDirtyOSList();
+                if (!Subscribers.ContainsKey(aSubscriber))
+                {
+                    Subscribers.Add(aSubscriber, 0);
+                    this.PropertyChanged += aSubscriber.ObservedItemChanged;
+                    aSubscriber.Subscriptions.Add(this);
+                }
+            }
+
+            public void UnSubscribe(FMAttribute_derived aSubscriber)
+            {
+                if (Subscribers.ContainsKey(aSubscriber))
+                {
+                    Subscribers.Remove(aSubscriber);
+                    this.PropertyChanged -= aSubscriber.ObservedItemChanged;
+                    aSubscriber.Subscriptions.Remove(this);
+                }
+            }
+
+            public void Changed()
+            {                                
                 if (PropertyChanged != null)
                     PropertyChanged(this, new PropertyChangedEventArgs("FMValue"));
             }
 
-            public FMObject thisObject;
-            public PersistenceState persState;
+            public virtual Object FMValue
+            {
+                get { throw new NotImplementedException(); }
+                set { throw new NotImplementedException(); }
+            }
+
+            string type;
+            public string Type
+            {
+                get
+                {
+                    return type;
+                }
+            }
+
+            public FMObject thisObject;           
             public string name;
         }
 
         public class FMAttribute: FMAbstractAttribute
         {
-             public FMAttribute(FMObject aThisObject, string aName, Object aValue)
-                : base(aThisObject, aName)
+            public FMAttribute(FMObject aThisObject, string aType, string aName, Object aValue)
+                : base(aThisObject, aType, aName)
             {
                 this.fMValue = aValue;
             }
 
             private Object fMValue;
-            public Object FMValue
+            public override Object FMValue
             {
                 get
                 {
-                    return fMValue;
+                    if (thisObject.objectSpace.SubscriptionHandler.IsSubscribing)
+                        Subscribe(thisObject.objectSpace.SubscriptionHandler.CurrentSubscriber);
+                    if (Type == "Int32")
+                        return (Int32)fMValue;
+                    else
+                        return fMValue;
                 }
                 set
                 {
-                    fMValue = value;
+                    if (Type == "Int32" && value is String)
+                        fMValue = Int32.Parse(value as String);
+                    else
+                        fMValue = value;
                     this.Changed();
                 }
             }
@@ -86,64 +156,73 @@ namespace FMSim.ORM
 
         public class FMAttribute_derived : FMAbstractAttribute
         {
-            public FMAttribute_derived(FMObject aThisObject, string aName, string aExpression)
-                : base(aThisObject, aName)
+            public List<FMAbstractAttribute> Subscriptions;
+            public List<FMObject> ObjectSubscriptions;
+            public List<FMObjectSpace> ObjectSpaceSubscriptions;
+            public FMAttribute_derived(FMObject aThisObject, string aType, string aName, string aExpression)
+                : base(aThisObject, aType, aName)
             {
+                Subscriptions = new List<FMAbstractAttribute>();
+                ObjectSubscriptions = new List<FMObject>();
+                ObjectSpaceSubscriptions = new List<FMObjectSpace>();
                 this.fMExpression = aExpression;
             }
             private string fMExpression; // Write only on creation
-            public object FMValue
+            public override object FMValue
             {
                 get
                 {
-                    return null;
-                }               
+                    try
+                    {
+                        if (thisObject.objectSpace.SubscriptionHandler.IsSubscribing)
+                            this.Subscribe(thisObject.objectSpace.SubscriptionHandler.CurrentSubscriber);
+                        thisObject.objectSpace.SubscriptionHandler.StartSubscriptionSession(this);
+                        return thisObject.objectSpace.ExpressionHandler.Evaluate(thisObject, fMExpression);
+                    }
+                    finally
+                    {
+                        thisObject.objectSpace.SubscriptionHandler.EndSubscriptionSession();                       
+                    }
+                }
+            }
+
+            public void ObservedItemChanged(Object sender, PropertyChangedEventArgs e)
+            {
+                this.Changed();
+            }
+
+            public void CancelAllSubscriptions()
+            {
+                foreach (FMAbstractAttribute FMA in Subscriptions)
+                    FMA.UnSubscribe(this);
+                foreach (FMObject FMO in ObjectSubscriptions)
+                    FMO.UnSubscribe(this);
+                foreach (FMObjectSpace FMOS in ObjectSpaceSubscriptions)
+                    FMOS.UnSubscribe(this);
+            }
+        }               
+
+        public void CreateAttribute(string aType, string aName, Object aValue)
+        {
+            if (!attributes.ContainsKey(aName.ToLower()))
+            {
+                attributes.Add(aName.ToLower(), new FMAttribute(this, aType, aName, aValue));
+                Changed();
             }
         }
 
-        bool GetIsDirty()        
+        public void CreateDerivedAttribute(string aType, string aName, string aExpression)
         {
-            foreach (KeyValuePair<string, FMAttribute> KVP in attributes)
-                if (KVP.Value.persState != PersistenceState.Current)
-                    return false;
-            return true;
-        }
-        
-        void UpdateDirtyOSList()
-        {
-            bool vIsInDirtyList = objectSpace.DirtyObjects.Contains(this);
-            bool vIsDirty = GetIsDirty();
-            if (vIsDirty && !vIsInDirtyList)
-                objectSpace.DirtyObjects.Add(this);
-            else if (!vIsDirty && vIsInDirtyList)
-                objectSpace.DirtyObjects.Remove(this);
-        }
-        
-        public FMObject(FMObjectSpace aObjectSpace)
-        {
-            attributes = new Dictionary<string, FMAttribute>();
-            attributes_DeletedPersisted = new Dictionary<string, FMAttribute>();
-            objectSpace = aObjectSpace;
-            aObjectSpace.AllObjects.Add(this);
-        }
-
-        public void CreateAttribute(string aName, Object aValue)
-        {            
-            if (! attributes.ContainsKey(aName))
+            if (!attributes.ContainsKey(aName.ToLower()))
             {
-                attributes.Add(aName.ToLower(), new FMAttribute(this, aName, aValue));
-                if (!objectSpace.DirtyObjects.Contains(this))
-                    objectSpace.DirtyObjects.Add(this); // optimization 
+                attributes.Add(aName.ToLower(), new FMAttribute_derived(this, aType, aName, aExpression));
                 Changed();
             }
         }        
 
         public void DeleteAttribute(string aName)
-        {
-            if (attributes[aName].persState != PersistenceState.New)
-                attributes_DeletedPersisted.Add(aName, attributes[aName]);
-            attributes.Remove(aName);
-            UpdateDirtyOSList();
+        {                
+            attributes.Remove(aName);         
             Changed();
         }       
   }

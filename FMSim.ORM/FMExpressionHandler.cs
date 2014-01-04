@@ -9,7 +9,7 @@ namespace FMSim.ORM
 {
     public delegate Object NamedOperation(Object aContext);
     public delegate Object ParamOperation(Object aContext, Object aContextParamterResult);
-    public delegate Object OperatorOperation(Object aLeftContext, Object aRightContext);
+
 
     public class FMExpressionHandler
     {
@@ -20,7 +20,14 @@ namespace FMSim.ORM
         {
             objectSpace = aObjectSpace; 
             Operations = new Dictionary<string, Delegate>();
+
+            // The keys have to be in lower case
             Operations.Add("->select", (ParamOperation)Select);
+            Operations.Add("->first", (NamedOperation)First);
+            Operations.Add("->sum", (NamedOperation)Sum);
+            Operations.Add("->size", (NamedOperation)Size);
+            Operations.Add("->sqrt", (NamedOperation)Sqrt);
+            Operations.Add("->tostring", (NamedOperation)ToString);
         }
 
         public Object Evaluate(Object aContext, string aExpression)
@@ -77,7 +84,7 @@ namespace FMSim.ORM
                 else if (aContext is FMObject)
                     vResult = (GetMemberOrConst((aExpression as MemberExpression).Member, aContext as FMObject));
                 else
-                    throw new Exception("Can not evaluate member from " + aContext.GetType());
+                    vResult = (GetMemberOrConst((aExpression as MemberExpression).Member, null));
 
                 if ((aExpression as MemberExpression).Next != null)
                     vResult = _evaluate(vResult, (aExpression as MemberExpression).Next);
@@ -85,7 +92,7 @@ namespace FMSim.ORM
                     vResult = !(Boolean)vResult;
                 return vResult;
             }
-            else if (aExpression.GetType() == typeof(NamedOperationalExpression))
+            else if (aExpression.GetType() == typeof(NamedOperationalExpression)) // ParamOperationExpression is derived from NamedOperationalExpression, therefore exac typematch is needed
             {
                 Object vResult = null;
                 string vOperation = (aExpression as NamedOperationalExpression).Operation;
@@ -221,9 +228,60 @@ namespace FMSim.ORM
             else throw new Exception("Select has to be evaluated on a list");
         }
 
+        Object First(Object aContext)
+        {
+            if ((aContext as List<Object>).Count > 0)
+                return (aContext as List<Object>)[0];
+            else
+                return null;
+        }
+
+        Object Size(Object aContext)
+        {
+            return (aContext as List<Object>).Count;
+        }
+
+        Object Sqrt(Object aContext)
+        {
+            if (aContext is Decimal)
+                return Convert.ToDecimal(Math.Sqrt(decimal.ToDouble((Decimal)aContext)));
+            else if (aContext is Int32)
+                return Convert.ToDecimal(Math.Sqrt((double)((Int32)aContext)));
+            else
+                throw new Exception("Input type: " + aContext.GetType() + " is not supported for Sqrt");            
+        }
+
+        Object ToString(Object aContext)
+        {
+            return aContext.ToString();
+        }
+
+        Object Sum(Object aContext)
+        {
+            List<Object> vList = aContext as List<Object>;
+            Object vResult = 0;
+            if (vList.Count > 0)
+            {
+                if (vList[0] is Int32)
+                {
+                    vResult = 0;
+                    foreach (Object O in vList)
+                        vResult = (Int32)vResult + (Int32)O;
+                }
+                else if (vList[0] is Decimal)
+                {
+                    vResult = Decimal.Zero;
+                    foreach (Object O in vList)
+                        vResult = (Decimal)vResult + (Decimal)O;
+                }
+                else throw new Exception("Sum is not implemented for type " + vList[0].GetType());
+            }
+            return vResult;
+        }
+
         Object GetMemberOrConst(string aMember, FMObject aCtxObject)
         {
-            if (aCtxObject.attributes.ContainsKey(aMember))
+            if (aCtxObject != null && aCtxObject.attributes.ContainsKey(aMember))
                 return aCtxObject.attributes[aMember].FMValue;
             else if ((aMember[0] == '\'') && (aMember[aMember.Length - 1] == '\''))
                 return aMember.Substring(1, aMember.Length - 2);

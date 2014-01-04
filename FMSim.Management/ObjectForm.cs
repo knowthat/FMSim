@@ -16,10 +16,10 @@ namespace FMSim.Management
 
         public static ObjectForm OpenObject(FMObject aRootObject)
         {
-            ObjectForm vFrm = new ObjectForm();            
-            vFrm.rootObject = aRootObject;            
-            vFrm.rootObject_PropertyChanged(null, null);           
-            vFrm.Show();            
+            ObjectForm vFrm = new ObjectForm();
+            vFrm.rootObject = aRootObject;
+            vFrm.rootObject_PropertyChanged(null, null);
+            vFrm.Show();
             return vFrm;
         }
         FMObject rootObject;
@@ -34,7 +34,7 @@ namespace FMSim.Management
         {
             panel1.Controls.Clear();
             int I = 0;
-            foreach (KeyValuePair<string, FMSim.ORM.FMObject.FMAttribute> kvp in rootObject.attributes)
+            foreach (KeyValuePair<string, FMSim.ORM.FMObject.FMAbstractAttribute> kvp in rootObject.attributes)
             {                
                 Label vLabel = new Label();
                 vLabel.Text = kvp.Value.name;
@@ -85,13 +85,27 @@ namespace FMSim.Management
             switch (comboBox1.Text)
             {
                 case ("int"):
-                    rootObject.CreateAttribute(textBox1.Text, 0);
+                    rootObject.CreateAttribute("Int32", textBox1.Text, 0);
                     break;                    
                 case "string":
-                    rootObject.CreateAttribute(textBox1.Text, "");
+                    rootObject.CreateAttribute("String", textBox1.Text, "");
+                    break;
+                case "/string":
+                    rootObject.CreateDerivedAttribute("String", textBox1.Text, textBox2.Text);
+                    break;
+                case "/int":
+                    rootObject.CreateDerivedAttribute("Int32", textBox1.Text, textBox2.Text);
                     break;
 
             }            
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (comboBox1.Text.IndexOf('/') > -1)
+                textBox2.Visible = true;
+            else
+                textBox2.Visible = false;
         }       
     }
 }

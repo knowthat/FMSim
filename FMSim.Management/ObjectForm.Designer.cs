@@ -34,6 +34,7 @@
             this.btnAdd = new System.Windows.Forms.Button();
             this.txtClass = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
+            this.textBox2 = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // panel1
@@ -41,15 +42,15 @@
             this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
                         | System.Windows.Forms.AnchorStyles.Left)
                         | System.Windows.Forms.AnchorStyles.Right)));
-            this.panel1.Location = new System.Drawing.Point(13, 41);
+            this.panel1.Location = new System.Drawing.Point(13, 28);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(219, 29);
+            this.panel1.Size = new System.Drawing.Size(328, 22);
             this.panel1.TabIndex = 1;
             // 
             // textBox1
             // 
             this.textBox1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.textBox1.Location = new System.Drawing.Point(12, 75);
+            this.textBox1.Location = new System.Drawing.Point(12, 59);
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(90, 20);
             this.textBox1.TabIndex = 2;
@@ -60,16 +61,19 @@
             this.comboBox1.FormattingEnabled = true;
             this.comboBox1.Items.AddRange(new object[] {
             "string",
-            "int"});
-            this.comboBox1.Location = new System.Drawing.Point(113, 74);
+            "int",
+            "/string",
+            "/int"});
+            this.comboBox1.Location = new System.Drawing.Point(113, 58);
             this.comboBox1.Name = "comboBox1";
             this.comboBox1.Size = new System.Drawing.Size(90, 21);
             this.comboBox1.TabIndex = 3;
+            this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
             // 
             // btnAdd
             // 
             this.btnAdd.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.btnAdd.Location = new System.Drawing.Point(213, 74);
+            this.btnAdd.Location = new System.Drawing.Point(213, 58);
             this.btnAdd.Name = "btnAdd";
             this.btnAdd.Size = new System.Drawing.Size(20, 20);
             this.btnAdd.TabIndex = 4;
@@ -83,7 +87,7 @@
                         | System.Windows.Forms.AnchorStyles.Right)));
             this.txtClass.Location = new System.Drawing.Point(53, 2);
             this.txtClass.Name = "txtClass";
-            this.txtClass.Size = new System.Drawing.Size(179, 20);
+            this.txtClass.Size = new System.Drawing.Size(288, 20);
             this.txtClass.TabIndex = 5;
             // 
             // label1
@@ -95,11 +99,22 @@
             this.label1.TabIndex = 6;
             this.label1.Text = "Class";
             // 
+            // textBox2
+            // 
+            this.textBox2.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)
+                        | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBox2.Location = new System.Drawing.Point(239, 58);
+            this.textBox2.Name = "textBox2";
+            this.textBox2.Size = new System.Drawing.Size(102, 20);
+            this.textBox2.TabIndex = 7;
+            this.textBox2.Visible = false;
+            // 
             // ObjectForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(239, 107);
+            this.ClientSize = new System.Drawing.Size(348, 91);
+            this.Controls.Add(this.textBox2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.txtClass);
             this.Controls.Add(this.btnAdd);
@@ -122,6 +137,7 @@
         private System.Windows.Forms.Button btnAdd;
         private System.Windows.Forms.TextBox txtClass;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.TextBox textBox2;
 
 
     }

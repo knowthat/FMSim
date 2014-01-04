@@ -26,7 +26,7 @@ namespace FMSim.Management
         {
             FMObject vObj = new FMObject(objSpace);
             vObj.FMClass = "User";
-            vObj.CreateAttribute("Name", "Johan");
+            vObj.CreateAttribute("String", "Name", "Johan");
             ObjectForm.OpenObject(vObj);
         }
 

@@ -50,7 +50,7 @@
             this.textBox1.Name = "textBox1";
             this.textBox1.Size = new System.Drawing.Size(321, 66);
             this.textBox1.TabIndex = 1;
-            this.textBox1.Text = "User.AllInstances->select(Name=\'Johan\')";
+            this.textBox1.Text = "User.AllInstances->select(name=\'Johan\').age->sum\r\n";
             // 
             // button2
             // 
