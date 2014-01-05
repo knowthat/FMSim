@@ -14,6 +14,7 @@ namespace FMSim.Management
     {
         FMObjectSpace objSpace;
         FMExpressionHandler expressionHandler;
+        List<ObjectForm> vObjectForms = new List<ObjectForm>();
 
         public MainForm()
         {
@@ -25,9 +26,7 @@ namespace FMSim.Management
         private void button1_Click(object sender, EventArgs e)
         {
             FMObject vObj = new FMObject(objSpace);
-            vObj.FMClass = "User";
-            vObj.CreateAttribute("String", "Name", "Johan");
-            ObjectForm.OpenObject(vObj);
+            vObjectForms.Add(ObjectForm.OpenObject(vObj));
         }
 
         private void MainForm_Load(object sender, EventArgs e)
@@ -47,6 +46,21 @@ namespace FMSim.Management
             {
                 MessageBox.Show(exc.ToString());
             }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            objSpace.PersistenceHandler.PersistObjects();
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            foreach (ObjectForm OF in vObjectForms)
+                OF.Close();
+            objSpace.AllObjects.Clear();
+            objSpace.PersistenceHandler.LoadPersistedObjects();
+            foreach(FMObject FMO in objSpace.AllObjects)
+                vObjectForms.Add(ObjectForm.OpenObject(FMO));
         }
     }
 }

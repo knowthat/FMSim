@@ -92,7 +92,7 @@ namespace FMSim.ORM
                     vResult = !(Boolean)vResult;
                 return vResult;
             }
-            else if (aExpression.GetType() == typeof(NamedOperationalExpression)) // ParamOperationExpression is derived from NamedOperationalExpression, therefore exac typematch is needed
+            else if (aExpression.GetType() == typeof(NamedOperationalExpression)) // ParamOperationExpression is derived from NamedOperationalExpression, therefore exact typematch is needed
             {
                 Object vResult = null;
                 string vOperation = (aExpression as NamedOperationalExpression).Operation;

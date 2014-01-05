@@ -15,6 +15,7 @@ namespace FMSim.ORM
         private Dictionary<FMObject.FMAttribute_derived, int> InstanceSubscribers;
         public FMSubscriptionHandler SubscriptionHandler;
         public FMExpressionHandler ExpressionHandler;
+        public FMPersistenceHandler PersistenceHandler;
 
         public ObservableCollection<FMObject> AllObjects
         {
@@ -59,6 +60,7 @@ namespace FMSim.ORM
         public FMObjectSpace()
         {
             InstanceSubscribers = new Dictionary<FMObject.FMAttribute_derived,int>();
+            PersistenceHandler = new FMPersistenceHandler(this);
             ExpressionHandler = new FMExpressionHandler(this);
             SubscriptionHandler = new FMSubscriptionHandler(this);
             allObjects = new ObservableCollection<FMObject>();

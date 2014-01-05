@@ -9,19 +9,37 @@ namespace FMSim.ORM
     public class FMObject: INotifyPropertyChanged
     {
         public event PropertyChangedEventHandler PropertyChanged;
-
+        private string objectGUID;
+        public string ObjectGUID
+        {
+            get 
+            {
+                return objectGUID;
+            }
+        }
         public Dictionary<string, FMAbstractAttribute> attributes;
         public Dictionary<FMAttribute_derived, int> Subscribers;
-        public FMObjectSpace objectSpace;
+        public FMObjectSpace objectSpace;        
 
         public FMObject(FMObjectSpace aObjectSpace)
+        {
+            objectGUID = Guid.NewGuid().ToString();
+            InitializeObject(aObjectSpace);
+        }
+
+        public FMObject(FMObjectSpace aObjectSpace, string aObjectGUID)
+        {
+            objectGUID = aObjectGUID;
+            InitializeObject(aObjectSpace);
+        }
+
+        private void InitializeObject(FMObjectSpace aObjectSpace)
         {
             attributes = new Dictionary<string, FMAbstractAttribute>();
             Subscribers = new Dictionary<FMAttribute_derived, int>();
             objectSpace = aObjectSpace;
             aObjectSpace.AllObjects.Add(this);
         }
-
 
         private string fMClass;        
         public string FMClass
@@ -168,6 +186,7 @@ namespace FMSim.ORM
                 this.fMExpression = aExpression;
             }
             private string fMExpression; // Write only on creation
+            public string Expression { get { return fMExpression; } }
             public override object FMValue
             {
                 get
@@ -178,6 +197,10 @@ namespace FMSim.ORM
                             this.Subscribe(thisObject.objectSpace.SubscriptionHandler.CurrentSubscriber);
                         thisObject.objectSpace.SubscriptionHandler.StartSubscriptionSession(this);
                         return thisObject.objectSpace.ExpressionHandler.Evaluate(thisObject, fMExpression);
+                    }
+                    catch
+                    {
+                        return null;
                     }
                     finally
                     {

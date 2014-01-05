@@ -43,6 +43,7 @@
     <Compile Include="FMExpressionHandler.cs" />
     <Compile Include="FMObject.cs" />
     <Compile Include="FMObjectSpace.cs" />
+    <Compile Include="FMPersistence.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="FMSubscription.cs" />
   </ItemGroup>
